@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  vsftpd:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: vsftpd
+    networks:
+      vsftpd-net:
+        ipv4_address: ${IP_ADDRESS}
+
+    container_name: vsftpd
+    ports:
+      - "0.0.0.0:20:20"
+      - "0.0.0.0:21:21"
+      - "40000-40009:40000-40009"
+    environment:
+      - FTP_USER=${FTP_USER}
+      - FTP_PASS=${FTP_PASS}
+      - FTP_GROUP=${FTP_GROUP}
+      - GID=${GID}
+      - UID=${UID}
+    volumes:
+      - ${FTP_DATA_PATH}:/home/${FTP_USER}
+    restart: unless-stopped
+
+networks:
+  vsftpd-net:
+    ipam:
+      driver: default
+      config:
+        - subnet: ${SUBNET}

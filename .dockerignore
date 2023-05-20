@@ -1,0 +1,6 @@
+# Ignore files and directories that are not needed in the Docker build context
+.git
+.vscode
+README.md
+.dockerignore
+.gitignore

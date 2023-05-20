@@ -1,0 +1,5 @@
+# Ignore files and directories that should not be tracked by Git
+.docker
+.env
+ftp_data
+.DS_Store
