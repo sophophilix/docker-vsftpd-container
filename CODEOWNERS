@@ -1,0 +1,9 @@
+# Default code owners
+* @sophophilix
+
+# Code owners for specific files or directories
+/docs/* @sophophilix
+/src/* @sophophilix
+/docker-compose.yml @sophophilix
+/README.md @sophophilix
+/Dockerfile @sophophilix
