@@ -6,11 +6,12 @@ services:
       context: .
       dockerfile: Dockerfile
     image: vsftpd
+    container_name: vsftpd
     networks:
       vsftpd-net:
         ipv4_address: ${IP_ADDRESS}
+      proxy:
 
-    container_name: vsftpd
     ports:
       - "0.0.0.0:20:20"
       - "0.0.0.0:21:21"
@@ -24,10 +25,23 @@ services:
     volumes:
       - ${FTP_DATA_PATH}:/home/${FTP_USER}
     restart: unless-stopped
-
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.vsftpd.entrypoints=http"
+      - "traefik.http.routers.vsftpd.rule=Host(`vsftpd.local.<your-domain-name>.org`)"
+      - "traefik.http.middlewares.vsftpd-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.vsftpd.middlewares=vsftpd-https-redirect"
+      - "traefik.http.routers.vsftpd-secure.entrypoints=https"
+      - "traefik.http.routers.vsftpd-secure.rule=Host(`vsftpd.local.<your-domain-name>.org`)"
+      - "traefik.http.routers.vsftpd-secure.tls=true"
+      - "traefik.http.routers.vsftpd-secure.service=vsftpd"
+      - "traefik.http.services.vsftpd.loadbalancer.server.port=80"
+      - "traefik.docker.network=proxy"
 networks:
   vsftpd-net:
     ipam:
       driver: default
       config:
         - subnet: ${SUBNET}
+  proxy:
+    external: true

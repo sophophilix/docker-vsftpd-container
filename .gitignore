@@ -3,3 +3,4 @@
 .env
 ftp_data
 .DS_Store
+.htpasswd
