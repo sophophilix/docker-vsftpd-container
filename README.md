@@ -16,6 +16,9 @@ The goal of this project is to simplify the process of setting up a VSFTPD serve
       - [Step-by-Step Guide](#step-by-step-guide)
   - [Accessing the VSFTPD server](#accessing-the-vsftpd-server)
   - [Accessing VSFTP Server from Mac using ncftp client](#accessing-vsftp-server-from-mac-using-ncftp-client)
+  - [Using VSFTPD with Traefik](#using-vsftpd-with-traefik)
+    - [Example Traefik Configuration](#example-traefik-configuration)
+    - [Steps to Enable Traefik Integration](#steps-to-enable-traefik-integration)
   - [Accessing the VSFTPD server using your Printer](#accessing-the-vsftpd-server-using-your-printer)
     - [Brother printer MFC-J6930DW](#brother-printer-mfc-j6930dw)
       - [Setting up your Brother Printer](#setting-up-your-brother-printer)
@@ -82,6 +85,55 @@ To set up and run the VSFTPD server using Docker and Docker Compose, follow thes
 - `brew install ncftp`
 - `ncftp -u {FTP_USER} -p {FTP_PASS} {IP_ADDRESS of your VSFTP Server}` all variable values from [env](./.env-template)
 - use all regular ftp commands such as put to transfer a file from your mac to the VSFTPD Server, the files will be located at data volume mounted at {FTP_DATA_PATH} on your host machine.
+
+## Using VSFTPD with Traefik
+
+`NOTE`: You need Traefik container setup and running in your environment with certs, e.g letsencrypt 
+
+To use Traefik as a reverse proxy for your VSFTPD server, we have updated the `docker-compose.yml` file with appropriate labels for Traefik. These labels allow Traefik to route HTTP/HTTPS requests to the VSFTPD container.
+
+### Example Traefik Configuration
+
+Ensure your `docker-compose.yml` includes the following labels under the VSFTPD service:
+
+```yaml
+labels:
+  - "traefik.enable=true"
+  - "traefik.http.routers.vsftpd.entrypoints=http"
+  - "traefik.http.routers.vsftpd.rule=Host(`vsftpd.local.<your-domain-name>.org`)"
+  - "traefik.http.middlewares.vsftpd-https-redirect.redirectscheme.scheme=https"
+  - "traefik.http.routers.vsftpd.middlewares=vsftpd-https-redirect"
+  - "traefik.http.routers.vsftpd-secure.entrypoints=https"
+  - "traefik.http.routers.vsftpd-secure.rule=Host(`vsftpd.local.<your-domain-name>.org`)"
+  - "traefik.http.routers.vsftpd-secure.tls=true"
+  - "traefik.http.routers.vsftpd-secure.service=vsftpd"
+  - "traefik.http.services.vsftpd.loadbalancer.server.port=80"
+  - "traefik.docker.network=proxy"
+```
+### Steps to Enable Traefik Integration
+
+- Network Configuration: Ensure that both the Traefik and VSFTPD containers are connected to the same Docker network, for example, proxy. Define this network in your docker-compose.yml:
+```yaml
+networks:
+  proxy:
+    external: true
+
+```
+- Update the Domain Name: Replace <your-domain-name> with your actual domain name. Ensure the domain name is correctly configured in your DNS or /etc/hosts for local development.
+- Restart Services: Run the following command to restart the VSFTPD container and apply the Traefik configuration:
+```bash
+docker-compose up -d
+
+```
+- Access the VSFTPD Server:
+```bash
+HTTP: http://<Your_local_IP>.local.<your-domain-name>.org 
+If you have a local DNS then you can also access it via the local traefik dns name example if the Local IP of the host points to traefik-dashboard ,we can access it as
+```http://traefik-dashboard.local.<your-domain-name>.org``` it will automatically get redirected to https , ensure the lets encrypt certs are configured on traefik.
+HTTPS: https://<YOUR_LOCAL_IP>.local.<your-domain-name>.org
+```https://traefik-dashboard.local.<your-domain-name>.org``` 
+Traefik will handle SSL termination and redirect HTTP traffic to HTTPS automatically.  
+```
 
 ## Accessing the VSFTPD server using your Printer
 
