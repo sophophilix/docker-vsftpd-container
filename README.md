@@ -62,7 +62,7 @@ To set up and run the VSFTPD server using Docker and Docker Compose, follow thes
 
 `cp .env-template .env`
 
-- Build and run the VSFTPD container:
+- Build and run the VSFTPD container::
 
   `docker-compose up -d`
 
